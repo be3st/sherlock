@@ -1,0 +1,57 @@
+name: Build macOS Apple Silicon executable
+
+on:
+  push:
+    branches:
+      - codex/macos-arm64-build
+    paths:
+      - .github/workflows/build-macos-arm64.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14-xlarge
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Apple Silicon runner
+        run: test "$(uname -m)" = "arm64"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project and packager
+        run: python -m pip install . pyinstaller
+
+      - name: Build standalone executable
+        run: |
+          python -m PyInstaller \
+            --noconfirm \
+            --clean \
+            --onefile \
+            --name sherlock \
+            --collect-data sherlock_project \
+            sherlock_project/__main__.py
+          chmod +x dist/sherlock
+          codesign --force --deep --sign - dist/sherlock
+
+      - name: Smoke test
+        run: |
+          file dist/sherlock | tee dist/build-info.txt
+          ./dist/sherlock --help > dist/help.txt
+          shasum -a 256 dist/sherlock > dist/sherlock.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sherlock-macos-arm64
+          path: |
+            dist/sherlock
+            dist/sherlock.sha256
+            dist/build-info.txt
+            dist/help.txt
+          if-no-files-found: error
+          retention-days: 7
