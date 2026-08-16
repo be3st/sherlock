@@ -35,6 +35,8 @@ jobs:
             --onefile \
             --name sherlock \
             --collect-data sherlock_project \
+            --copy-metadata sherlock-project \
+            --add-data "pyproject.toml:." \
             sherlock_project/__main__.py
           chmod +x dist/sherlock
           codesign --force --deep --sign - dist/sherlock
