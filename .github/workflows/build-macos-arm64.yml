@@ -1,4 +1,4 @@
-name: Build Sherlock for macOS M1 (Rosetta compatible)
+name: Build native Sherlock for macOS Apple Silicon
 
 on:
   push:
@@ -22,10 +22,13 @@ jobs:
           cache: pip
 
       - name: Install project and packager
-        run: python -m pip install . pyinstaller
+        run: |
+          python -m pip install . pyinstaller
+          python -m pip install --force-reinstall --no-binary tomli tomli==2.2.1
 
       - name: Build standalone executable
         run: |
+          test "$(uname -m)" = "arm64"
           python -m PyInstaller \
             --noconfirm \
             --clean \
@@ -39,12 +42,13 @@ jobs:
       - name: Smoke test
         run: |
           file dist/sherlock | tee dist/build-info.txt
+          file dist/sherlock | grep -q arm64
           ./dist/sherlock --help > dist/help.txt
           shasum -a 256 dist/sherlock > dist/sherlock.sha256
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sherlock-macos-m1
+          name: sherlock-macos-arm64
           path: |
             dist/sherlock
             dist/sherlock.sha256
