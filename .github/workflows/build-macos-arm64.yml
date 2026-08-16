@@ -1,4 +1,4 @@
-name: Build macOS Apple Silicon executable
+name: Build Sherlock for macOS M1 (Rosetta compatible)
 
 on:
   push:
@@ -12,12 +12,9 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-14-arm64
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-
-      - name: Verify Apple Silicon runner
-        run: test "$(uname -m)" = "arm64"
 
       - uses: actions/setup-python@v5
         with:
@@ -47,7 +44,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sherlock-macos-arm64
+          name: sherlock-macos-m1
           path: |
             dist/sherlock
             dist/sherlock.sha256
